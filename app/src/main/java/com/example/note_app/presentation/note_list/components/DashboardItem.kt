@@ -3,6 +3,7 @@ package com.example.note_app.presentation.note_list.components
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,24 +32,24 @@ data class DashboardItem(
     val fileCount: Int,
     val sizeInMB: Float,
     val iconTint: Color,
+    val backgroundRes: Int,
+    val iconRes: Int,
     val onClick: () -> Unit
 )
 
+
 @Composable
 fun DashboardItemCard(
-    item: DashboardItem,
-    modifier: Modifier = Modifier
+    item: DashboardItem, modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
-        // Ảnh background
+    Box(modifier = modifier.clickable { item.onClick() }) {
         Image(
             painter = painterResource(id = R.drawable.item),
-            contentDescription = "Dashboard Item Background",
+            contentDescription = null,
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Icon bên trong
         Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -56,33 +58,33 @@ fun DashboardItemCard(
             Box(
                 modifier = Modifier
                     .background(
-                        color = color6B4EFF.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(23.dp)
+                        color = item.iconTint.copy(alpha = 0.1f), shape = RoundedCornerShape(23.dp)
                     )
                     .padding(8.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_document),
-                    contentDescription = "Folder Icon",
-                    contentScale = ContentScale.Fit,
+                    painter = painterResource(id = item.iconRes),
+                    contentDescription = null,
                     modifier = Modifier.size(26.dp)
                 )
             }
+
             Text(
-                text = "Personal",
+                text = item.title,
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 16.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                fontWeight = FontWeight.ExtraBold
             )
+
             Text(
-                text = "Personal",
+                text = "${item.sizeInMB} MB",
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 16.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                fontSize = 14.sp
             )
         }
     }
 }
+
 
 @Composable
 fun DashBoardGridView(
@@ -97,28 +99,32 @@ fun DashBoardGridView(
             fileCount = 34,
             sizeInMB = 512.0f,
             iconTint = Color.Red,
+            backgroundRes = R.drawable.ic_document,
+            iconRes = R.drawable.ic_document,
             onClick = onPersonalClick
-        ),
-        DashboardItem(
+        ), DashboardItem(
             title = "Work",
             fileCount = 20,
             sizeInMB = 256.0f,
             iconTint = Color.Green,
+            backgroundRes = R.drawable.ic_academic,
+            iconRes = R.drawable.ic_academic,
             onClick = onWorkClick
-        ),
-        DashboardItem(
+        ), DashboardItem(
             title = "Private",
             fileCount = 15,
             sizeInMB = 128.0f,
             iconTint = Color.Blue,
-            onClick = onPrivateClick
-        ),
-        DashboardItem(
+            onClick = onPrivateClick,
+            backgroundRes = R.drawable.ic_work,
+            iconRes = R.drawable.ic_work,
+        ), DashboardItem(
             title = "Others",
             fileCount = 10,
             sizeInMB = 64.0f,
             iconTint = Color.Yellow,
-            onClick = onOthersClick
+            onClick = onOthersClick, backgroundRes = R.drawable.ic_paper,
+            iconRes = R.drawable.ic_paper,
         )
     )
 
@@ -141,33 +147,12 @@ fun DashBoardGridView(
     }
 }
 
-@Preview(
-    showBackground = true,
-    backgroundColor = 0xFFFFFFFF
-)
-@Composable
-fun DashboardItemCardPreview() {
-    val item = DashboardItem(
-        title = "Documents",
-        fileCount = 12,
-        sizeInMB = 256.5f,
-        iconTint = Color.Blue,
-        onClick = {}
-    )
-
-    DashboardItemCard(
-        item = item,
-        modifier = Modifier.size(width = 181.dp, height = 182.dp)
-    )
-}
 
 @Preview(showBackground = true)
 @Composable
 fun DashBoardGridViewPreview() {
-    DashBoardGridView(
-        onPersonalClick = {},
+    DashBoardGridView(onPersonalClick = {},
         onWorkClick = {},
         onPrivateClick = {},
-        onOthersClick = {}
-    )
+        onOthersClick = {})
 }
