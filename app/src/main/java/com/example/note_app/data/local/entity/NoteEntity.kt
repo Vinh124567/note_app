@@ -4,6 +4,14 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.note_app.domain.model.Note
 
+enum class NoteType {
+    PERSONAL,
+    WORK,
+    STUDY,
+    SHOPPING,
+    REMINDER
+}
+
 @Entity(tableName = "notes")
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true)
@@ -11,7 +19,8 @@ data class NoteEntity(
     val title: String,
     val content: String,
     val timestamp: Long,
-    val color: Int
+    val color: Int,
+    val noteType: NoteType
 ) {
     fun toNote(): Note {
         return Note(
@@ -19,10 +28,12 @@ data class NoteEntity(
             title = title,
             content = content,
             timestamp = timestamp,
-            color = color
+            color = color,
+            noteType = noteType
         )
     }
 }
+
 
 fun Note.toEntity(): NoteEntity {
     return NoteEntity(
@@ -30,6 +41,7 @@ fun Note.toEntity(): NoteEntity {
         title = title,
         content = content,
         timestamp = timestamp,
-        color = color
+        color = color,
+        noteType = noteType
     )
 }

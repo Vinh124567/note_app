@@ -1,4 +1,4 @@
-package com.example.note_app.presentation.note_list
+package com.example.note_app.presentation.dashboard_screen
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -14,12 +14,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class NoteListViewModel @Inject constructor(
+class DashBoardViewModel @Inject constructor(
     private val repository: NoteRepository
 ) : ViewModel() {
 
-    private val _state = mutableStateOf(NoteListState())
-    val state: State<NoteListState> = _state
+    private val _state = mutableStateOf(ActionListState())
+    val state: State<ActionListState> = _state
 
     private var recentlyDeletedNote: Note? = null
     private var getNotesJob: Job? = null
@@ -28,15 +28,15 @@ class NoteListViewModel @Inject constructor(
         getNotes()
     }
 
-    fun onEvent(event: NoteListEvent) {
+    fun onEvent(event: ActionListEvent) {
         when (event) {
-            is NoteListEvent.DeleteNote -> {
+            is ActionListEvent.DeleteAction -> {
                 viewModelScope.launch {
                     repository.deleteNote(event.note)
                     recentlyDeletedNote = event.note
                 }
             }
-            is NoteListEvent.RestoreNote -> {
+            is ActionListEvent.RestoreAction -> {
                 viewModelScope.launch {
                     repository.insertNote(recentlyDeletedNote ?: return@launch)
                     recentlyDeletedNote = null

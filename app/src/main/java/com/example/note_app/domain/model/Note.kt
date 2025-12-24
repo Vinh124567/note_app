@@ -1,10 +1,15 @@
 package com.example.note_app.domain.model
+
+import com.example.note_app.data.local.entity.NoteType
+
 data class Note(
     val id: Int? = null,
     val title: String,
     val content: String,
     val timestamp: Long,
-    val color: Int
+    val color: Int,
+    val noteType: NoteType
+
 ) {
     companion object {
         val noteColors = listOf(

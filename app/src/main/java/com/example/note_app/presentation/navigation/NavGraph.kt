@@ -9,36 +9,34 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.note_app.presentation.add_edit_note.AddEditNoteScreen
 import com.example.note_app.presentation.add_edit_note.AddEditNoteViewModel
-import com.example.note_app.presentation.note_list.NoteListScreen
-import com.example.note_app.presentation.note_list.NoteListViewModel
+import com.example.note_app.presentation.dashboard_screen.DashboardScreen
+import com.example.note_app.presentation.dashboard_screen.DashBoardViewModel
+import com.example.note_app.presentation.note_list_screen.NoteListScreen
+import com.example.note_app.presentation.note_list_screen.NoteListViewModel
 import com.example.note_app.presentation.onboarding.OnboardingScreen
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: String = Screen.NoteList.route
+    startDestination: String = Screen.DashBoard.route
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
-        composable(route = Screen.NoteList.route) {
-            val viewModel = hiltViewModel<NoteListViewModel>()
-            NoteListScreen(
-                viewModel = viewModel,
-                onNavigateToAddEditNote = { noteId ->
-                    navController.navigate(Screen.AddEditNote.createRoute(noteId))
-                }
-            )
-        }
-
         composable(route = Screen.Onboarding.route) {
             OnboardingScreen(
                 onFinish = {
-                    navController.navigate(Screen.NoteList.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    navController.navigate(Screen.DashBoard.route) {
+                        popUpTo(Screen.DashBoard.route) { inclusive = true }
                     }
                 }
+            )
+        }
+        composable(route = Screen.DashBoard.route) {
+            DashboardScreen(
+                viewModel = hiltViewModel<DashBoardViewModel>(),
+                navController = navController
             )
         }
 
@@ -51,11 +49,28 @@ fun NavGraph(
                 }
             )
         ) {
-            // ✅ ViewModel tự lấy noteId từ SavedStateHandle
             val viewModel = hiltViewModel<AddEditNoteViewModel>()
             AddEditNoteScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = Screen.NoteList.route,
+            arguments = listOf(
+                navArgument("noteType") {
+                    type = NavType.StringType
+                }
+            )
+        ) {
+            val viewModel = hiltViewModel<NoteListViewModel>()
+            NoteListScreen(
+                viewModel = viewModel,
+                navController = navController,
+                onBackClick = {
                     navController.popBackStack()
                 }
             )

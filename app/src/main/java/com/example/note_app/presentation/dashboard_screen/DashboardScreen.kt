@@ -1,4 +1,4 @@
-package com.example.note_app.presentation.note_list
+package com.example.note_app.presentation.dashboard_screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,51 +11,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.note_app.R
+import com.example.note_app.data.local.entity.NoteType
 import com.example.note_app.domain.model.Note
-import com.example.note_app.presentation.note_list.components.DashBoardGridView
+import com.example.note_app.presentation.dashboard_screen.components.DashBoardGridView
+import com.example.note_app.presentation.navigation.Screen
 import com.example.note_app.ui.theme.color836CFB
 import com.example.note_app.ui.theme.colorB3A4FF
 import com.example.note_app.ui.theme.colorE7E3FD
 
 @Composable
-fun NoteListScreen(
-    viewModel: NoteListViewModel,
-    onNavigateToAddEditNote: (Int?) -> Unit
-) {
-    val state = viewModel.state.value
+fun DashboardScreen(
+    viewModel: DashBoardViewModel,
+    navController: NavController
 
+) {
     NoteListContent(
-        state = state,
-        onNavigateToAddEditNote = onNavigateToAddEditNote,
-        onDeleteNote = { note ->
-            viewModel.onEvent(NoteListEvent.DeleteNote(note))
-        },
-        onAddNoteClick = { onNavigateToAddEditNote(null) }
+        navController = navController
     )
 }
 
 @Composable
 fun NoteListContent(
-    state: NoteListState,
-    onNavigateToAddEditNote: (Int?) -> Unit,
-    onDeleteNote: (Note) -> Unit,
-    onAddNoteClick: () -> Unit
+    navController: NavController
 ) {
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddNoteClick
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Thêm ghi chú"
-                )
-            }
-        }
     ) { padding ->
         Box(
             modifier = Modifier
@@ -125,43 +108,14 @@ fun NoteListContent(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 DashBoardGridView(
-                    onPersonalClick = { },
+                    onPersonalClick = {
+                        navController.navigate(Screen.NoteList.createRoute(NoteType.PERSONAL))
+                    },
                     onWorkClick = { },
                     onPrivateClick = { },
                     onOthersClick = { }
                 )
             }
         }
-    }
-}
-
-// Preview
-@Preview(showBackground = true)
-@Composable
-fun NoteListContentPreview() {
-    MaterialTheme {
-        NoteListContent(
-            state = NoteListState(
-                notes = listOf(
-                    Note(
-                        id = 1,
-                        title = "Ghi chú mẫu 1",
-                        content = "Đây là nội dung ghi chú mẫu để preview giao diện",
-                        timestamp = System.currentTimeMillis(),
-                        color = 0xFFFFAB91.toInt()
-                    ),
-                    Note(
-                        id = 2,
-                        title = "Ghi chú mẫu 2",
-                        content = "Thêm một ghi chú nữa để xem LazyColumn hoạt động",
-                        timestamp = System.currentTimeMillis(),
-                        color = 0xFF81C784.toInt()
-                    )
-                )
-            ),
-            onNavigateToAddEditNote = {},
-            onDeleteNote = {},
-            onAddNoteClick = {}
-        )
     }
 }

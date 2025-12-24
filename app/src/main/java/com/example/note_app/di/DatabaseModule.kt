@@ -23,8 +23,8 @@ object DatabaseModule {
         Room.databaseBuilder(
             context,
             NoteDatabase::class.java,
-            "note_db"
-        ).build()
+            NoteDatabase.DATABASE_NAME
+        ).fallbackToDestructiveMigration().build()
 
     @Provides
     fun provideNoteDao(database: NoteDatabase): NoteDao =

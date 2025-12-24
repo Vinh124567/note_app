@@ -10,8 +10,7 @@ import com.example.note_app.domain.repository.NoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import com.example.note_app.data.local.entity.NoteType
 
 @HiltViewModel
 class AddEditNoteViewModel @Inject constructor(
@@ -25,15 +24,23 @@ class AddEditNoteViewModel @Inject constructor(
 
     private val _noteTitle = mutableStateOf("")
     val noteTitle: State<String> = _noteTitle
-    private val _noteColor = mutableStateOf(Color.Yellow.toArgb())
-    val noteColor: State<Int> = _noteColor
-
 
     private val _noteContent = mutableStateOf("")
     val noteContent: State<String> = _noteContent
 
+    private val _noteColor = mutableStateOf(0xFFBAE1FF.toInt())
+    val noteColor: State<Int> = _noteColor
+
+    private val _noteType = mutableStateOf(NoteType.PERSONAL)
+    val noteType: State<NoteType> = _noteType
+
+    private val _showTypeSelector = mutableStateOf(false)
+    val showTypeSelector: State<Boolean> = _showTypeSelector
+
+    private val _showColorPicker = mutableStateOf(false)
+    val showColorPicker: State<Boolean> = _showColorPicker
+
     init {
-        // ✅ Tự động load note nếu đang edit
         noteId?.let { id ->
             loadNote(id)
         }
@@ -44,6 +51,8 @@ class AddEditNoteViewModel @Inject constructor(
             repository.getNoteById(id)?.let { note ->
                 _noteTitle.value = note.title
                 _noteContent.value = note.content
+                _noteColor.value = note.color
+                _noteType.value = note.noteType
             }
         }
     }
@@ -56,6 +65,30 @@ class AddEditNoteViewModel @Inject constructor(
         _noteContent.value = newContent
     }
 
+    fun onColorChange(newColor: Int) {
+        _noteColor.value = newColor
+    }
+
+    fun onTypeChange(newType: NoteType) {
+        _noteType.value = newType
+    }
+
+    fun showTypeSelector() {
+        _showTypeSelector.value = true
+    }
+
+    fun hideTypeSelector() {
+        _showTypeSelector.value = false
+    }
+
+    fun showColorPicker() {
+        _showColorPicker.value = true
+    }
+
+    fun hideColorPicker() {
+        _showColorPicker.value = false
+    }
+
     fun saveNote() {
         viewModelScope.launch {
             val note = Note(
@@ -63,7 +96,8 @@ class AddEditNoteViewModel @Inject constructor(
                 title = noteTitle.value,
                 content = noteContent.value,
                 timestamp = System.currentTimeMillis(),
-                        color = noteColor.value
+                color = noteColor.value,
+                noteType = noteType.value
             )
             repository.insertNote(note)
         }

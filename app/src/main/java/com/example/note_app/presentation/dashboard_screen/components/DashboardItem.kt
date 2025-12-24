@@ -1,4 +1,4 @@
-package com.example.note_app.presentation.note_list.components
+package com.example.note_app.presentation.dashboard_screen.components
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.Image
@@ -25,7 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.note_app.R
-import com.example.note_app.ui.theme.color6B4EFF
 
 data class DashboardItem(
     val title: String,
