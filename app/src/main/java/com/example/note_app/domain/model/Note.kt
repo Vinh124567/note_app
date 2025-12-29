@@ -8,7 +8,9 @@ data class Note(
     val content: String,
     val timestamp: Long,
     val color: Int,
-    val noteType: NoteType
+    val noteType: NoteType,
+    val isSelected: Boolean = false,
+    val reminderTime: Long? = null
 
 ) {
     companion object {

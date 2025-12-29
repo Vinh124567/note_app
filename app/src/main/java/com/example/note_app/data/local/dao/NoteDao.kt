@@ -29,4 +29,10 @@ interface NoteDao {
 
     @Query("SELECT * FROM notes WHERE noteType = :type ORDER BY timestamp DESC")
     fun getNoteByType(type: NoteType): Flow<List<NoteEntity>>
+
+    @Query("SELECT * FROM notes WHERE (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%') ORDER BY timestamp DESC")
+    fun searchNotes(query: String): Flow<List<NoteEntity>>
+
+    @Query("SELECT * FROM notes WHERE noteType = :type AND (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%') ORDER BY timestamp DESC")
+    fun searchNotesByType(type: NoteType, query: String): Flow<List<NoteEntity>>
 }

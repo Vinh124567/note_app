@@ -20,7 +20,8 @@ data class NoteEntity(
     val content: String,
     val timestamp: Long,
     val color: Int,
-    val noteType: NoteType
+    val noteType: NoteType,
+    val reminderTime: Long? = null
 ) {
     fun toNote(): Note {
         return Note(
@@ -29,7 +30,8 @@ data class NoteEntity(
             content = content,
             timestamp = timestamp,
             color = color,
-            noteType = noteType
+            noteType = noteType,
+            reminderTime = reminderTime
         )
     }
 }
@@ -42,6 +44,7 @@ fun Note.toEntity(): NoteEntity {
         content = content,
         timestamp = timestamp,
         color = color,
-        noteType = noteType
+        noteType = noteType,
+        reminderTime = reminderTime
     )
 }

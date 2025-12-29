@@ -33,4 +33,16 @@ class NoteRepositoryImpl @Inject constructor(
             list.map { it.toNote() }
         }
     }
+
+    override fun searchNotes(query: String): Flow<List<Note>> {
+        return dao.searchNotes(query).map { list ->
+            list.map { it.toNote() }
+        }
+    }
+
+    override fun searchNotesByType(type: NoteType, query: String): Flow<List<Note>> {
+        return dao.searchNotesByType(type, query).map { list ->
+            list.map { it.toNote() }
+        }
+    }
 }

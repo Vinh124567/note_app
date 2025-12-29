@@ -1,44 +1,71 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.example.note_app.presentation.note_list_screen.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.note_app.R
-import com.example.note_app.data.local.entity.NoteType
 import com.example.note_app.domain.model.Note
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun FlexibleCardLayout(
     notes: List<Note>,
     onAddNoteClick: () -> Unit,
+    onSelectNote: ((Int) -> Unit)? = null,
+    nLongClick: ((Int) -> Unit)? = null,
+    isSelectionMode: Boolean = false,
+    selectedNotes: Set<Int> = emptySet(),
+    onNoteClick: ((Int) -> Unit)? = null
 ) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Fixed(2),
-        verticalItemSpacing = 8.dp,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(8.dp)
+        verticalItemSpacing = 12.dp,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(16.dp)
     ) {
-        item {
-            AddNoteButton(onClick = onAddNoteClick)
+        if (!isSelectionMode) {
+            item {
+                AddNoteButton(onClick = onAddNoteClick)
+            }
         }
-        items(notes) { note ->
-            NoteItem(note = note)
+
+        items(notes, key = { it.id ?: 0 }) { note ->
+            NoteItem(
+                note = note,
+                modifier = Modifier,
+                nLongClick = {
+                    note.id?.let { nLongClick?.invoke(it) }
+                },
+                isSelectionMode = isSelectionMode,
+                isSelected = note.id in selectedNotes,
+                onClick = {
+                    note.id?.let { onNoteClick?.invoke(it) }
+                }
+            )
         }
     }
 }
@@ -50,16 +77,25 @@ fun AddNoteButton(onClick: () -> Unit) {
             .fillMaxWidth()
             .wrapContentHeight()
             .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-            modifier = Modifier.padding(12.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_add_new_note),
-                contentDescription = "Image"
+                contentDescription = "Add note",
+                modifier = Modifier.size(48.dp)
             )
-            Text(text = "+ Thêm note mới")
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Thêm ghi chú",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
@@ -67,67 +103,110 @@ fun AddNoteButton(onClick: () -> Unit) {
 @Composable
 fun NoteItem(
     note: Note,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    nLongClick: (() -> Unit)? = null,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight()
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        width = 3.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .combinedClickable(
+                onClick = { onClick?.invoke() },
+                onLongClick = { nLongClick?.invoke() }
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(note.color)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 4.dp else 2.dp
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            Text(text = note.title)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = note.content)
+        Box {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = note.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = note.content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 8,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = formatTimestamp(note.timestamp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+            if (isSelectionMode) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface,
+                                    shape = CircleShape
+                                )
+                                .padding(2.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.AddCircle,
+                            contentDescription = "Not selected",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                    shape = CircleShape
+                                )
+                                .padding(2.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
-@Preview(
-    showBackground = true,
-    widthDp = 400,
-    heightDp = 800
-)
-@Preview(
-    showBackground = true,
-    widthDp = 400,
-    heightDp = 800
-)
-@Composable
-fun FlexibleCardLayoutPreview() {
-    FlexibleCardLayout(
-        onAddNoteClick = {},
-        notes = listOf(
-            Note(
-                title = "Note 1",
-                content = "Nội dung ngắn",
-                timestamp = System.currentTimeMillis(),
-                color = Note.noteColors[0],
-                noteType = NoteType.STUDY
-            ),
-            Note(
-                title = "Note 2",
-                content = "Nội dung dài hơn để test staggered grid layout trong Jetpack Compose",
-                timestamp = System.currentTimeMillis(),
-                color = Note.noteColors[1],
-                noteType = NoteType.STUDY
-            ),
-            Note(
-                title = "Note 3",
-                content = "Short",
-                timestamp = System.currentTimeMillis(),
-                color = Note.noteColors[2],
-                noteType = NoteType.STUDY
-            ),
-            Note(
-                title = "Note 4",
-                content = "Rất rất rất rất dài để thấy rõ các card có chiều cao khác nhau trong staggered grid",
-                timestamp = System.currentTimeMillis(),
-                color = Note.noteColors[3],
-                noteType = NoteType.STUDY
-            )
-        )
-    )
+private fun formatTimestamp(timestamp: Long): String {
+    val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }
-

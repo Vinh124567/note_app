@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalLayoutApi::class)
+@file:OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 package com.example.note_app.presentation.add_edit_note
 
 import androidx.compose.animation.*
@@ -30,13 +30,15 @@ fun AddEditNoteScreen(
     val selectedColor = viewModel.noteColor.value
     val showTypeSelector = viewModel.showTypeSelector.value
     val showColorPicker = viewModel.showColorPicker.value
+    val reminderTime = viewModel.reminderTime.value
+    var showReminderPicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             SmallTopAppBar(
                 title = {
                     Text(
-                        "Tạo ghi chú mới",
+                        if (viewModel.isEditMode) "Chỉnh sửa ghi chú" else "Tạo ghi chú mới",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -51,6 +53,16 @@ fun AddEditNoteScreen(
                     }
                 },
                 actions = {
+                    // Reminder button
+                    IconButton(onClick = { showReminderPicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Đặt nhắc nhở",
+                            tint = if (reminderTime != null) MaterialTheme.colorScheme.primary 
+                                   else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    
                     IconButton(onClick = { viewModel.showColorPicker() }) {
                         Box(
                             modifier = Modifier
@@ -234,6 +246,174 @@ fun AddEditNoteScreen(
                 )
             }
         }
+
+        // Reminder Picker Bottom Sheet
+        if (showReminderPicker) {
+            ReminderPickerBottomSheet(
+                currentReminderTime = reminderTime,
+                onDismiss = { showReminderPicker = false },
+                onReminderSelected = { time ->
+                    viewModel.onReminderTimeChange(time)
+                    showReminderPicker = false
+                },
+                onReminderRemoved = {
+                    viewModel.onReminderTimeChange(null)
+                    showReminderPicker = false
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun ReminderPickerBottomSheet(
+    currentReminderTime: Long?,
+    onDismiss: () -> Unit,
+    onReminderSelected: (Long) -> Unit,
+    onReminderRemoved: () -> Unit
+) {
+    var selectedDate by remember { mutableStateOf<Long?>(currentReminderTime) }
+    var selectedHour by remember { mutableStateOf(9) }
+    var selectedMinute by remember { mutableStateOf(0) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                "Đặt nhắc nhở",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Date picker (simplified - using current date + days)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("Hôm nay", "Ngày mai", "Sau 3 ngày", "Sau 7 ngày").forEachIndexed { index, label ->
+                    val days = when (index) {
+                        0 -> 0
+                        1 -> 1
+                        2 -> 3
+                        else -> 7
+                    }
+                    val time = System.currentTimeMillis() + (days * 24 * 60 * 60 * 1000L)
+                    
+                    FilterChip(
+                        selected = selectedDate?.let { 
+                            val selectedDay = java.util.Calendar.getInstance().apply { 
+                                timeInMillis = it 
+                            }.get(java.util.Calendar.DAY_OF_YEAR)
+                            val thisDay = java.util.Calendar.getInstance().apply { 
+                                timeInMillis = time 
+                            }.get(java.util.Calendar.DAY_OF_YEAR)
+                            selectedDay == thisDay
+                        } ?: false,
+                        onClick = {
+                            selectedDate = time
+                        },
+                        label = { Text(label) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Time picker (simplified)
+            Text(
+                "Thời gian",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Hour selector
+                Column {
+                    Text("Giờ", style = MaterialTheme.typography.labelSmall)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { if (selectedHour > 0) selectedHour-- }) {
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Giảm giờ")
+                        }
+                        Text(
+                            "$selectedHour",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        IconButton(onClick = { if (selectedHour < 23) selectedHour++ }) {
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Tăng giờ")
+                        }
+                    }
+                }
+
+                // Minute selector
+                Column {
+                    Text("Phút", style = MaterialTheme.typography.labelSmall)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { if (selectedMinute > 0) selectedMinute -= 5 }) {
+                            Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Giảm phút")
+                        }
+                        Text(
+                            "$selectedMinute",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                        IconButton(onClick = { if (selectedMinute < 55) selectedMinute += 5 }) {
+                            Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Tăng phút")
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Action buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (currentReminderTime != null) {
+                    OutlinedButton(
+                        onClick = onReminderRemoved,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Xóa nhắc nhở")
+                    }
+                }
+                
+                Button(
+                    onClick = {
+                        selectedDate?.let { date ->
+                            val calendar = java.util.Calendar.getInstance().apply {
+                                timeInMillis = date
+                                set(java.util.Calendar.HOUR_OF_DAY, selectedHour)
+                                set(java.util.Calendar.MINUTE, selectedMinute)
+                                set(java.util.Calendar.SECOND, 0)
+                            }
+                            onReminderSelected(calendar.timeInMillis)
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = selectedDate != null
+                ) {
+                    Text("Xác nhận")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 
@@ -316,14 +496,14 @@ fun ColorPickerContent(
     onColorSelected: (Int) -> Unit
 ) {
     val colors = listOf(
-        0xFFFFB3BA.toInt(), // Pastel Red
-        0xFFFFDFBA.toInt(), // Pastel Orange
-        0xFFFFFFBA.toInt(), // Pastel Yellow
-        0xFFBAFFC9.toInt(), // Pastel Green
-        0xFFBAE1FF.toInt(), // Pastel Blue
-        0xFFE0BBE4.toInt(), // Pastel Purple
-        0xFFFFD6E8.toInt(), // Pastel Pink
-        0xFFC9C9C9.toInt(), // Gray
+        0xFFFFB3BA.toInt(),
+        0xFFFFDFBA.toInt(),
+        0xFFFFFFBA.toInt(),
+        0xFFBAFFC9.toInt(),
+        0xFFBAE1FF.toInt(),
+        0xFFE0BBE4.toInt(),
+        0xFFFFD6E8.toInt(),
+        0xFFC9C9C9.toInt(),
     )
 
     Column(
